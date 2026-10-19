@@ -60,7 +60,7 @@ final class StoreFlowTests: XCTestCase {
         let item = try XCTUnwrap(store.items.first)
         store.toggleAvailability(item)
 
-        let updated = try db.read { try MenuItem.fetchOne(db, key: item.id) }
+        let updated = try db.read { db in try MenuItem.fetchOne(db, key: item.id) }
         XCTAssertTrue(updated?.isAvailable == !item.isAvailable)
 
         let inStock = store.availableItems.count
@@ -80,7 +80,7 @@ final class StoreFlowTests: XCTestCase {
         let second = try XCTUnwrap(floor.openOrder(for: table))
         XCTAssertEqual(first, second, "повторный тап по столу открывает тот же счёт")
 
-        let updated = try db.read { try RestaurantTable.fetchOne(db, key: table.id) }
+        let updated = try db.read { db in try RestaurantTable.fetchOne(db, key: table.id) }
         XCTAssertEqual(updated?.status, TableStatus.occupied)
         XCTAssertEqual(updated?.currentOrderId, first)
 
@@ -126,7 +126,7 @@ final class StoreFlowTests: XCTestCase {
         let table = try XCTUnwrap(floor.tables.first(where: { $0.number == 5 }))
         XCTAssertNil(floor.updateTable(table, number: 5, seats: 6, zone: "Летняя веранда"))
 
-        let updated = try db.read { try RestaurantTable.fetchOne(db, key: table.id) }
+        let updated = try db.read { db in try RestaurantTable.fetchOne(db, key: table.id) }
         XCTAssertEqual(updated?.seats, 6)
         XCTAssertEqual(updated?.zone, "Летняя веранда")
     }
@@ -174,7 +174,7 @@ final class StoreFlowTests: XCTestCase {
         XCTAssertEqual(store.paymentMethodTitle, "Наличные")
         XCTAssertEqual(store.order?.totalAmount, dish.price * 2)
 
-        let freed = try db.read { try RestaurantTable.fetchOne(db, key: table.id) }
+        let freed = try db.read { db in try RestaurantTable.fetchOne(db, key: table.id) }
         XCTAssertEqual(freed?.status, TableStatus.free)
         XCTAssertNil(freed?.currentOrderId)
 
@@ -220,9 +220,9 @@ final class StoreFlowTests: XCTestCase {
         XCTAssertTrue(store.cancelOrder())
         XCTAssertTrue(TestSupport.waitUntil { store.didClose })
 
-        let removed = try db.read { try Order.fetchOne(db, key: orderId) }
+        let removed = try db.read { db in try Order.fetchOne(db, key: orderId) }
         XCTAssertNil(removed)
-        let freed = try db.read { try RestaurantTable.fetchOne(db, key: table.id) }
+        let freed = try db.read { db in try RestaurantTable.fetchOne(db, key: table.id) }
         XCTAssertEqual(freed?.status, TableStatus.free)
     }
 

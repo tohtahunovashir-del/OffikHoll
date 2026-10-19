@@ -1,5 +1,6 @@
 import Foundation
 import GRDB
+@testable import OffikHoll
 
 /// Small helpers shared by the unit tests.
 enum TestSupport {
