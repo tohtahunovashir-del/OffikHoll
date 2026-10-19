@@ -10,6 +10,9 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 concurrency:
   group: ios-build-${{ github.ref }}
   cancel-in-progress: true
@@ -73,6 +76,29 @@ jobs:
           mkdir -p artifacts
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" artifacts/OffikHoll-unsigned.app.zip
           ls -lh artifacts
+
+      - name: Report compiler errors
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ ! -f build.log ]; then
+            echo "build.log is missing"
+            exit 0
+          fi
+          {
+            echo "### OffikHoll build diagnostics"
+            echo ""
+            echo "Commit: \`${{ github.sha }}\`"
+            echo ""
+            echo '```'
+            grep -nE "error:|BUILD FAILED|The following build commands failed" build.log | head -120 || true
+            echo '```'
+          } > build-errors.md
+          jq -Rs '{body: .}' build-errors.md > build-errors.json
+          gh api --method POST \
+            "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" \
+            --input build-errors.json || true
 
       - name: Collect build log
         if: always()
