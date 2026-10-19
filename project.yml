@@ -69,13 +69,37 @@ targets:
     dependencies:
       - package: GRDB
 
+  OffikHollTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: OffikHollTests
+    dependencies:
+      - target: OffikHoll
+      - package: GRDB
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.offikholl.app.tests
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: "5.0"
+        ENABLE_TESTABILITY: YES
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/OffikHoll.app/OffikHoll"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+
 schemes:
   OffikHoll:
     build:
       targets:
         OffikHoll: all
+        OffikHollTests: [test]
     run:
       config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: false
+      targets:
+        - OffikHollTests
     profile:
       config: Release
     analyze:
