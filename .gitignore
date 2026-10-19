@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+# Xcode
+DerivedData/
+build/
+.build/
+*.xcuserstate
+xcuserdata/
+*.xcuserdatad
+# XcodeGen output (project.yml is the source of truth)
+OffikHoll.xcodeproj/
+# CI artifacts
+artifacts/
+build.log
+# Generated Info.plist (created by xcodegen from project.yml)
+# NOTE: it is intentionally kept out of version control.

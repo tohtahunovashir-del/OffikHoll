@@ -1,0 +1,102 @@
+name: iOS Build
+
+on:
+  push:
+    branches:
+      - main
+      - 'arena/**'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ios-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build unsigned OffikHoll.app
+    runs-on: macos-15
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate --spec project.yml --project .
+
+      - name: Restore Swift package pins
+        run: |
+          mkdir -p OffikHoll.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
+          cp Package.resolved OffikHoll.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+
+      - name: Resolve Swift packages (GRDB)
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project OffikHoll.xcodeproj \
+            -scheme OffikHoll \
+            -clonedSourcePackagesDirPath .build/spm
+
+      - name: Build without code signing
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project OffikHoll.xcodeproj \
+            -scheme OffikHoll \
+            -configuration Debug \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath .build/DerivedData \
+            -clonedSourcePackagesDirPath .build/spm \
+            -quiet \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_ENTITLEMENTS="" \
+            DEVELOPMENT_TEAM="" \
+            2>&1 | tee build.log
+
+      - name: Package unsigned .app
+        if: success()
+        run: |
+          APP_PATH=".build/DerivedData/Build/Products/Debug-iphoneos/OffikHoll.app"
+          test -d "$APP_PATH" || { echo "App not found at $APP_PATH"; find .build/DerivedData/Build/Products -maxdepth 3 -type d || true; exit 1; }
+          mkdir -p artifacts
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" artifacts/OffikHoll-unsigned.app.zip
+          ls -lh artifacts
+
+      - name: Collect build log
+        if: always()
+        run: |
+          mkdir -p artifacts
+          if [ -f build.log ]; then ditto -c -k build.log artifacts/build.log.zip; fi
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: OffikHoll-unsigned-${{ github.run_number }}
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## OffikHoll iOS build"
+            echo ""
+            echo "- Commit: \`${{ github.sha }}\`"
+            echo "- Xcode: $(xcodebuild -version | head -1)"
+            echo "- Signing: disabled (CODE_SIGNING_ALLOWED=NO)"
+            echo "- Artifacts: OffikHoll-unsigned-*.zip"
+          } >> "$GITHUB_STEP_SUMMARY"
