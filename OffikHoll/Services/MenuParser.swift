@@ -60,16 +60,20 @@ struct MenuParser {
                       !Self.isNoise(nextText),
                       Self.canBeWrappedName(combined) else { break }
                 guard nextText.count <= 90 else { break }
-                guard Self.isPriceOnly(nextText) || Self.canBeWrappedName(nextText) else { break }
+                // A wrapped dish name often carries the price on its last line
+                // ("… с уткой и" / "хрустящими баклажанами ..... 720 ₽"), so a
+                // currency-bearing continuation is legitimate. Whether it
+                // really is one is decided by parsing the combined candidate
+                // below.
+                guard Self.isPriceOnly(nextText)
+                    || Self.canBeWrappedName(nextText)
+                    || Self.hasTrailingPrice(nextText) else { break }
                 guard Self.categoryHeader(for: nextText, existing: existingCategories) == nil else { break }
 
                 // A short title followed by a complete dish row is most likely
                 // an unknown category header, not a wrapped dish name.
                 let nextLooksLikeFullItem = !Self.isPriceOnly(nextText)
-                    && Self.trailingPriceRegex.firstMatch(
-                        in: nextText,
-                        range: NSRange(nextText.startIndex..., in: nextText)
-                    ) != nil
+                    && Self.hasTrailingPrice(nextText)
                 if nextLooksLikeFullItem && combined.split(separator: " ").count < 3 {
                     break
                 }
@@ -436,6 +440,10 @@ struct MenuParser {
 
     private static func isPriceOnly(_ text: String) -> Bool {
         priceOnlyRegex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) != nil
+    }
+
+    private static func hasTrailingPrice(_ text: String) -> Bool {
+        trailingPriceRegex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) != nil
     }
 
     private static func capture(

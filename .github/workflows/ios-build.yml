@@ -68,6 +68,52 @@ jobs:
             DEVELOPMENT_TEAM="" \
             2>&1 | tee build.log
 
+      - name: Run unit tests
+        run: |
+          set -o pipefail
+
+          DEST=""
+          for CANDIDATE in "iPhone 16 Pro" "iPhone 16" "iPhone 15 Pro" "iPhone 15" "iPhone SE (3rd generation)"; do
+            if xcrun simctl list devices available | grep -q "${CANDIDATE} ("; then
+              DEST="platform=iOS Simulator,name=${CANDIDATE},OS=latest"
+              break
+            fi
+          done
+          if [ -z "$DEST" ]; then
+            DEVICE=$(xcrun simctl list devices available | grep -m1 -oE 'iPhone [^(]+' | sed 's/ *$//')
+            DEST="platform=iOS Simulator,name=${DEVICE},OS=latest"
+          fi
+          echo "Simulator destination: $DEST"
+
+          # Simulator builds are signed ad-hoc by Xcode, so the device-build
+          # signing overrides used above must NOT be passed here.
+          xcodebuild test \
+            -project OffikHoll.xcodeproj \
+            -scheme OffikHoll \
+            -configuration Debug \
+            -destination "$DEST" \
+            -derivedDataPath .build/TestDerivedData \
+            -clonedSourcePackagesDirPath .build/spm \
+            2>&1 | tee test.log
+
+          grep -E "Test Suite .* (passed|failed)|Executed [0-9]+ test" test.log | tail -20 || true
+
+      - name: Publish test summary
+        if: always()
+        run: |
+          {
+            echo ""
+            echo "### Unit tests"
+            echo ""
+            if [ -f test.log ]; then
+              echo '```'
+              grep -E "Test Suite .* (passed|failed)|Executed [0-9]+ test|error:" test.log | tail -40 || echo "no test output"
+              echo '```'
+            else
+              echo "test.log is missing"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Package unsigned .app
         if: success()
         run: |
@@ -105,6 +151,7 @@ jobs:
         run: |
           mkdir -p artifacts
           if [ -f build.log ]; then ditto -c -k build.log artifacts/build.log.zip; fi
+          if [ -f test.log ]; then ditto -c -k test.log artifacts/test.log.zip; fi
 
       - name: Upload artifacts
         if: always()
