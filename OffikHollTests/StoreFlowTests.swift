@@ -217,6 +217,9 @@ final class StoreFlowTests: XCTestCase {
         let orderId = try XCTUnwrap(floor.openOrder(for: table))
 
         let store = OrderStore(database: db, orderId: orderId)
+        // cancelOrder() works from the observed snapshot, so the bill has to
+        // arrive through ValueObservation first — exactly like in the app.
+        XCTAssertTrue(TestSupport.waitUntil { store.order != nil }, "счёт должен загрузиться")
         XCTAssertTrue(store.cancelOrder())
         XCTAssertTrue(TestSupport.waitUntil { store.didClose })
 
