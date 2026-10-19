@@ -123,28 +123,45 @@ jobs:
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" artifacts/OffikHoll-unsigned.app.zip
           ls -lh artifacts
 
-      - name: Report compiler errors
+      - name: Report build and test failures
         if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if [ ! -f build.log ]; then
-            echo "build.log is missing"
-            exit 0
-          fi
           {
-            echo "### OffikHoll build diagnostics"
+            echo "### OffikHoll CI diagnostics"
             echo ""
             echo "Commit: \`${{ github.sha }}\`"
             echo ""
+            echo "#### Build"
             echo '```'
-            grep -nE "error:|BUILD FAILED|The following build commands failed" build.log | head -120 || true
+            if [ -f build.log ]; then
+              grep -nE "error:|BUILD FAILED|The following build commands failed" build.log | head -60 || echo "no build errors"
+            else
+              echo "build.log missing"
+            fi
             echo '```'
-          } > build-errors.md
-          jq -Rs '{body: .}' build-errors.md > build-errors.json
+            echo ""
+            echo "#### Tests"
+            echo '```'
+            if [ -f test.log ]; then
+              grep -nE "error:|Testing failed|Test Case .* failed|XCTAssert|Executed [0-9]+ test" test.log | head -80 || echo "no matching test lines"
+              echo "----- tail -----"
+              tail -30 test.log
+            else
+              echo "test.log missing (tests never started)"
+            fi
+            echo '```'
+            echo ""
+            echo "#### Simulators"
+            echo '```'
+            xcrun simctl list devices available | head -20 || true
+            echo '```'
+          } > ci-errors.md
+          jq -Rs '{body: .}' ci-errors.md > ci-errors.json
           gh api --method POST \
             "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" \
-            --input build-errors.json || true
+            --input ci-errors.json || true
 
       - name: Collect build log
         if: always()
