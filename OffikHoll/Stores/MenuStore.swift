@@ -12,7 +12,7 @@ final class MenuStore: ObservableObject {
     @Published var errorMessage: String?
 
     private let database: DatabaseQueue
-    private var observationCancellable: AnyCancellable?
+    private var observationCancellable = Set<AnyCancellable>()
 
     init(database: DatabaseQueue) {
         self.database = database

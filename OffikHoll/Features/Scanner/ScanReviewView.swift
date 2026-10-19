@@ -147,7 +147,7 @@ struct ScanReviewView: View {
             ShareSheet(items: [item.url])
         }
         .errorAlert(
-            Binding(
+            Binding<String?>(
                 get: { exportError ?? menu.errorMessage },
                 set: { value in
                     if value == nil {

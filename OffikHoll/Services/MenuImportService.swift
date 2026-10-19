@@ -139,7 +139,7 @@ struct MenuImportService {
         var value = raw.lowercased()
         value = value.replacingOccurrences(of: "ё", with: "е")
         let allowed = CharacterSet.alphanumerics.union(.whitespaces)
-        value = String(value.unicodeScalars.filter { allowed.contains($0) })
+        value = value.components(separatedBy: allowed.inverted).joined()
         let parts = value.split(whereSeparator: { $0.isWhitespace })
         return parts.joined(separator: " ")
     }

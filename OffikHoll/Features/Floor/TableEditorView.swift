@@ -96,7 +96,7 @@ struct TableEditorView: View {
             Text("Стол исчезнет с карты зала. Отменить это действие нельзя.")
         }
         .errorAlert(
-            Binding(
+            Binding<String?>(
                 get: { localError ?? floor.errorMessage },
                 set: { value in
                     if value == nil {

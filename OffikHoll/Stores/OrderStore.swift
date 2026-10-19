@@ -15,7 +15,7 @@ final class OrderStore: ObservableObject {
 
     let orderId: UUID
     private let database: DatabaseQueue
-    private var observationCancellable: AnyCancellable?
+    private var observationCancellable = Set<AnyCancellable>()
 
     init(database: DatabaseQueue, orderId: UUID) {
         self.database = database
