@@ -1,0 +1,13 @@
+.DS_Store
+*.xcuserstate
+xcuserdata/
+DerivedData/
+build/
+OffikHoll.xcodeproj/*
+!OffikHoll.xcodeproj/project.xcworkspace/
+OffikHoll.xcodeproj/project.xcworkspace/*
+!OffikHoll.xcodeproj/project.xcworkspace/xcshareddata/
+OffikHoll.xcodeproj/project.xcworkspace/xcshareddata/*
+!OffikHoll.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+OffikHoll.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/*
+!OffikHoll.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved

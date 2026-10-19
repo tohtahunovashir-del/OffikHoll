@@ -1,0 +1,39 @@
+name: OffikHoll
+options:
+  bundleIdPrefix: ru.offikholl
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+packages:
+  GRDB:
+    url: https://github.com/groue/GRDB.swift.git
+    from: 7.11.1
+targets:
+  OffikHoll:
+    type: application
+    platform: iOS
+    sources:
+      - path: OffikHoll
+        excludes:
+          - '.github'
+          - '**/*.md'
+      - path: OffikHoll/Assets.xcassets
+      - path: OffikHoll/LaunchScreen.storyboard
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ru.offikholl.app
+        PRODUCT_NAME: OffikHoll
+        SWIFT_VERSION: 5.0
+        IPHONEOS_DEPLOYMENT_TARGET: 16.0
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        INFOPLIST_KEY_CFBundleDisplayName: OffikHoll
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.business
+        INFOPLIST_KEY_NSCameraUsageDescription: "Камера нужна для сканирования бумажного меню. Обработка выполняется на устройстве."
+        INFOPLIST_KEY_UILaunchStoryboardName: LaunchScreen
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGNING_ALLOWED: NO
+    dependencies:
+      - package: GRDB
+        product: GRDB
