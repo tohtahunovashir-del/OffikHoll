@@ -164,7 +164,7 @@ final class MenuOCRService {
     ) -> [RecognizedLine] {
         let boxes: [TextBox] = observations.compactMap { observation in
             guard let candidate = observation.topCandidates(1).first,
-                  candidate.confidence >= 0.2 else { return nil }
+                  candidate.confidence >= 0.3 else { return nil }
             let text = candidate.string.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !text.isEmpty else { return nil }
             return TextBox(text: text, confidence: candidate.confidence, rect: observation.boundingBox)
