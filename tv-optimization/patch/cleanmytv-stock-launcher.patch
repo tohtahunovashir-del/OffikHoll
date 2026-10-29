@@ -1,0 +1,31 @@
+diff --git a/src/main/debloat.ts b/src/main/debloat.ts
+index 6a513d2..8fe7769 100644
+--- a/src/main/debloat.ts
++++ b/src/main/debloat.ts
+@@ -15,7 +15,10 @@ export const SETUPWRAITH = 'com.google.android.tungsten.setupwraith'
+ // They answer HOME too, but they are not launchers: setupwraith taking Home is the crash loop the
+ // home guard exists to prevent.
+ const NOT_LAUNCHERS = [SETUPWRAITH, 'com.android.tv.settings', 'com.android.settings', 'com.android.provision']
+-export const KNOWN_STOCK_LAUNCHERS = ['com.google.android.tvlauncher', 'com.google.android.apps.tv.launcherx', 'com.google.android.leanbacklauncher', 'com.mitv.tvhome']
++// Operator STB launchers come first so a box shipped with one (e.g. Dom.ru / Ertelcom Movix on the
++// ZTE B867RE, whose stock Home is com.ertelecom.domrutvstb) rolls back to the launcher it shipped
++// with rather than to a Google launcher that happens to be installed alongside it.
++export const KNOWN_STOCK_LAUNCHERS = ['com.ertelecom.domrutvstb', 'com.google.android.tvlauncher', 'com.google.android.apps.tv.launcherx', 'com.google.android.leanbacklauncher', 'com.mitv.tvhome']
+ const CUSTOM_LAUNCHER = 'com.gathin.tvhome'
+ const SETTINGS = ['window_animation_scale', 'transition_animation_scale', 'animator_duration_scale'] as const
+ const HOME_RE = /^[A-Za-z_][\w.]*\/[\w.$]+$/
+diff --git a/tests/launcher.test.ts b/tests/launcher.test.ts
+index b0c4379..7bc8499 100644
+--- a/tests/launcher.test.ts
++++ b/tests/launcher.test.ts
+@@ -150,4 +150,10 @@ describe('CleanMyTV Home', () => {
+     expect(tv.packages.get('com.google.android.apps.tv.launcherx')).toBe('enabled')
+   })
+ 
++  it('accepts an operator STB launcher as stock Home (Dom.ru / Ertelcom, ZTE B867RE)', async () => {
++    tv.home = 'com.ertelecom.domrutvstb/.HomeActivity'
++    tv.homeClaims = ['com.ertelecom.domrutvstb/.HomeActivity']
++    expect(await L.detectStock()).toBe('com.ertelecom.domrutvstb')
++  })
++
+ })

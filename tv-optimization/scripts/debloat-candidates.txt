@@ -1,0 +1,35 @@
+# Список кандидатов на отключение для Movix / ZTE B867RE (Дом.ру).
+# Формат: по одному имени пакета в строке, " # комментарий" — заметка, "#" — пустая строка.
+# Работает скриптом optimize.sh: отключается ТОЛЬКО то, что реально установлено на приставке.
+# Пакет отключается, а не удаляется — включается обратно командой rollback.
+#
+# ВАЖНО: не вписывай сюда ничего из com.ertelecom.* (телевидение Дом.ру),
+# пульт/Bluetooth, Google Play и сеть — скрипт и так не даст это отключить (защитный список).
+# Свои пакеты (ivi, okko и т.п.) добавляй в конец — после диагностики я подскажу, что можно.
+
+# --- Google-блоат, отключаемый в ~15-80% списков cleanyourtv по 107 моделям ТВ
+com.google.android.feedback            # отправка отчётов Google, на ТВ бесполезно
+com.google.android.play.games          # Google Play Games
+com.google.android.videos              # Google TV / Фильмы — тяжёлое, рекомендации у вас делает лаунчер Дом.ру
+com.google.android.tvrecommendations   # сервис «рекомендаций» домашнего экрана
+com.google.android.youtube.tvmusic     # YouTube Music
+com.google.android.partnersetup        # partner-рефералы Google
+com.android.printspooler               # печать — на приставке не нужна
+com.google.android.syncadapters.calendar # синхронизация календаря (календаря на ТВ нет)
+com.google.android.backdrop            # заставка Ambient от Google
+com.google.android.tv.bugreportsender  # загрузчик отчётов о сбоях
+com.google.android.apps.tv.dreamx      # Google-заставка
+com.android.tv.feedbackconsent         # окно согласия на фидбек
+com.google.android.leanbacklauncher.recommendations # строки рекомендаций старого лаунчера
+com.google.android.onetimeinitializer  # «настройка при первом включении»
+android.autoinstalls.config.google.gtvpai # автоустановка партнерских приложений
+com.google.android.music               # Google Play Music (закрыт сервисом)
+com.android.adservices.api             # Privacy Sandbox / рекламные идентификаторы
+
+# --- Опционально (НЕ включено по умолчанию — раскомментируй сам, если нужно):
+# com.google.android.marvin.talkback    # экранная речь (доступность)
+# com.google.android.tv.assistant       # Ассистент Google для ТВ
+# com.google.android.katniss            # голосовой поиск с пульта (микрофон)
+# com.google.android.apps.mediashell    # встроенный Chromecast (каст с телефона)
+# com.google.android.tv.remote.service  # пульт в телефоне (НЕ отключать, если пользуетесь)
+# com.google.android.tungsten.setupwraith # мастер настройки Google TV (на Android 9 обычно нет; отключение может стереть сохранённый Wi-Fi — не включай без диагностики)
