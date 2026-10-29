@@ -6,12 +6,13 @@ rem Использование:
 rem   run.bat diagnose            — собрать информацию о приставке (первая команда!)
 rem   run.bat optimize [IP] [путь\к\home.apk]  — отключить бloat + анимации (+ смена лаунчера)
 rem   run.bat rollback  [IP]      — вернуть всё как было
+rem   run.bat probe     [IP]      — проба команд установки лаунчера с откатом (диагноз ошибки Home)
 rem IP можно не указывать — скрипт спросит.
 rem ============================================================================
 set "MODE=%~1"
 if "%MODE%"=="" set "MODE=diagnose"
-if /I not "%MODE%"=="diagnose" if /I not "%MODE%"=="optimize" if /I not "%MODE%"=="rollback" (
-  echo Неизвестная команда: %MODE%. Нужна diagnose ^| optimize ^| rollback.
+if /I not "%MODE%"=="diagnose" if /I not "%MODE%"=="optimize" if /I not "%MODE%"=="rollback" if /I not "%MODE%"=="probe" (
+  echo Неизвестная команда: %MODE%. Нужна diagnose ^| optimize ^| rollback ^| probe.
   exit /b 1
 )
 set "IP=%~2"

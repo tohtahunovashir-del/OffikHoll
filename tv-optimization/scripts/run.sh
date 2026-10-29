@@ -4,6 +4,7 @@
 #   ./run.sh diagnose                    — информация о приставке (первая команда!)
 #   ./run.sh optimize [IP] [путь/к/home.apk] — бloat + анимации (+ опционально смена лаунчера)
 #   ./run.sh rollback  [IP]              — вернуть всё как было
+#   ./run.sh probe     [IP]              — проба команд установки с откатом (диагноз ошибки Home)
 set -euo pipefail
 MODE=${1:-diagnose}
 IP=${2:-}
@@ -11,8 +12,8 @@ APK=${3:-}
 DIR="$(cd "$(dirname "$0")" && pwd)"
 mkdir -p "$DIR/logs"
 
-case "$MODE" in diagnose|optimize|rollback) ;; *)
-  echo "Неизвестная команда: $MODE (нужна diagnose | optimize | rollback)" >&2; exit 1 ;;
+case "$MODE" in diagnose|optimize|rollback|probe) ;; *)
+  echo "Неизвестная команда: $MODE (нужна diagnose | optimize | rollback | probe)" >&2; exit 1 ;;
 esac
 
 # ---------- найти adb: PATH, затем папка CleanMyTV, затем Android SDK
