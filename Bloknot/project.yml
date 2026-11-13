@@ -1,0 +1,89 @@
+name: Bloknot
+
+options:
+  bundleIdPrefix: com.bloknot
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: false
+  developmentLanguage: ru
+
+packages:
+  GRDB:
+    url: https://github.com/groue/GRDB.swift.git
+    exactVersion: 6.29.3
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+    TARGETED_DEVICE_FAMILY: "1"
+
+targets:
+  Bloknot:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: Bloknot
+        excludes:
+          - "Info.plist"
+          - "LaunchScreen.storyboard"
+          - "Assets.xcassets"
+      - path: Bloknot/Assets.xcassets
+        buildPhase: resources
+      - path: Bloknot/LaunchScreen.storyboard
+        buildPhase: resources
+    settings:
+      base:
+        INFOPLIST_FILE: Bloknot/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        PRODUCT_BUNDLE_IDENTIFIER: com.bloknot.app
+        PRODUCT_NAME: Bloknot
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1"
+    dependencies:
+      - package: GRDB
+        product: GRDB
+
+  BloknotTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: BloknotTests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.bloknot.app.tests
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: "5.0"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Bloknot.app/Bloknot"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+    dependencies:
+      - target: Bloknot
+      - package: GRDB
+        product: GRDB
+
+schemes:
+  Bloknot:
+    build:
+      targets:
+        Bloknot: all
+        BloknotTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: false
+      targets:
+        - BloknotTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
