@@ -9,6 +9,7 @@ xcuserdata/
 *.xcuserdatad
 # XcodeGen output (project.yml is the source of truth)
 OffikHoll.xcodeproj/
+Bloknot/Bloknot.xcodeproj/
 # CI artifacts
 artifacts/
 build.log

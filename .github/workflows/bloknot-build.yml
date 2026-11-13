@@ -1,0 +1,164 @@
+name: Bloknot · iOS Build
+
+on:
+  push:
+    branches: [main, 'arena/**']
+    paths:
+      - "Bloknot/**"
+      - ".github/workflows/bloknot-build.yml"
+  pull_request:
+    paths:
+      - "Bloknot/**"
+      - ".github/workflows/bloknot-build.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: bloknot-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build unsigned Bloknot.app
+    runs-on: macos-15
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: Bloknot
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          xcodegen --version || true
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Resolve Swift packages (GRDB)
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project Bloknot.xcodeproj \
+            -scheme Bloknot \
+            -clonedSourcePackagesDirPath .build/spm
+
+      - name: Build without code signing
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project Bloknot.xcodeproj \
+            -scheme Bloknot \
+            -configuration Debug \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath DerivedData \
+            -clonedSourcePackagesDirPath .build/spm \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee build.log
+
+      - name: Run unit tests
+        run: |
+          set -o pipefail
+          DEST=""
+          for CANDIDATE in "iPhone 16 Pro" "iPhone 16" "iPhone 15 Pro" "iPhone 15" "iPhone SE (3rd generation)"; do
+            if xcrun simctl list devices available | grep -q "${CANDIDATE} ("; then
+              DEST="platform=iOS Simulator,name=${CANDIDATE},OS=latest"
+              break
+            fi
+          done
+          if [ -z "$DEST" ]; then
+            DEVICE=$(xcrun simctl list devices available | grep -m1 -oE 'iPhone [^(]+' | sed 's/ *$//')
+            DEST="platform=iOS Simulator,name=${DEVICE},OS=latest"
+          fi
+          echo "Simulator destination: $DEST"
+          xcodebuild test \
+            -project Bloknot.xcodeproj \
+            -scheme Bloknot \
+            -configuration Debug \
+            -destination "$DEST" \
+            -derivedDataPath DerivedData \
+            -clonedSourcePackagesDirPath .build/spm \
+            2>&1 | tee test.log
+          grep -E "Test Suite .* (passed|failed)|Executed [0-9]+ test" test.log | tail -20 || true
+
+      - name: Package unsigned .app
+        run: |
+          mkdir -p artifacts
+          APP_PATH=$(find DerivedData/Build/Products -maxdepth 3 -name "Bloknot.app" -type d | head -1)
+          echo "App path: $APP_PATH"
+          if [ -z "$APP_PATH" ]; then
+            echo "Bloknot.app not found" >&2
+            find DerivedData/Build/Products -maxdepth 3 -type d | head -20
+            exit 1
+          fi
+          cd "$(dirname "$APP_PATH")"
+          zip -qry "$GITHUB_WORKSPACE/Bloknot/artifacts/Bloknot-unsigned.app.zip" Bloknot.app
+
+      - name: Report failures
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "### Bloknot CI diagnostics"
+            echo ""
+            echo "Commit: \`${{ github.sha }}\`"
+            echo ""
+            echo "#### Build"
+            echo '```'
+            if [ -f build.log ]; then
+              grep -nE "error:|BUILD FAILED|The following build commands failed" build.log | head -60 || echo "no build errors"
+            else
+              echo "build.log missing"
+            fi
+            echo '```'
+            echo ""
+            echo "#### Tests"
+            echo '```'
+            if [ -f test.log ]; then
+              grep -nE "error:|Testing failed|Test Case .* failed|XCTAssert|Executed [0-9]+ test" test.log | head -80 || echo "no matching test lines"
+            else
+              echo "test.log missing"
+            fi
+            echo '```'
+          } > ci-errors.md
+          jq -Rs '{body: .}' ci-errors.md > ci-errors.json
+          cd "$GITHUB_WORKSPACE"
+          gh api --method POST \
+            "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" \
+            --input Bloknot/ci-errors.json || true
+
+      - name: Upload unsigned app
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Bloknot-unsigned
+          path: |
+            Bloknot/artifacts/*.zip
+            Bloknot/build.log
+            Bloknot/test.log
+          if-no-files-found: warn
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## Bloknot"
+            echo ""
+            echo "- Xcode: $(xcodebuild -version | head -1)"
+            if [ -f build.log ]; then
+              echo "- Build: $(grep -c 'error:' build.log || true) errors"
+            fi
+            if [ -f test.log ]; then
+              grep -E "Executed [0-9]+ test" test.log | tail -1 || true
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
